@@ -1,0 +1,60 @@
+version: '3.8'
+services:
+    backend:
+        build:
+            context: ./backend
+            dockerfile: Dockerfile
+        image: malia.af:5000/aem_ims_backend:latest
+        extra_hosts:
+            - 'host.docker.internal:host-gateway'
+        ports:
+            - '${APP_PORT:-8000}:80'
+            - '${APP_PORT:-6001}:6001'
+            - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
+        networks:
+            - aem
+        depends_on:
+            - mysql
+        volumes:
+            - aem-backend-storage:/var/www/storage
+    frontend:
+        build:
+            context: ./frontend
+            dockerfile: Dockerfile
+        image: malia.af:5000/aem_ims_frontend:latest
+        ports:
+            - '3000:80'
+        depends_on:
+            - backend
+    mysql:
+        image: mysql:8.3.0
+        restart: always
+        environment:
+            MYSQL_ROOT_PASSWORD: Spp!@Cbs44044
+            MYSQL_DATABASE: aem-ims
+        ports:
+            - '3306:3306'
+        volumes:
+            - aem-mysql:/var/lib/mysql
+        networks:
+            - aem
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin:5.2
+        restart: always
+        ports:
+            - '8080:80'
+        environment:
+            PMA_HOST: mysql
+            MYSQL_ROOT_PASSWORD: Spp!@Cbs44044
+        depends_on:
+            - mysql
+        networks:
+            - aem
+networks:
+    aem:
+        driver: bridge
+volumes:
+    aem-mysql:
+        driver: local
+    aem-backend-storage:
+        driver: local
